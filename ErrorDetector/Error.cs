@@ -58,9 +58,12 @@ namespace ErrorDetector
             sb.Append(' ', 4).AppendLine("Call Stack");
             for (int i = 0; i < Calls.Count; i++)
                 sb.Append(' ', 8).AppendLine($"{(i == 0 ? "Target Site" : "at")} {Calls[i]}");
-            sb.Append(' ', 4).AppendLine("Not Parsed Call Stacks");
-            for (int i = 0; i < Exception.NotParsedCallStack.Length; i++)
-                sb.Append(' ', 8).AppendLine(Exception.NotParsedCallStack[i]);
+            if (Exception.NotParsedCallStack.Length > 0)
+            {
+                sb.Append(' ', 4).AppendLine("Not Parsed Call Stacks");
+                for (int i = 0; i < Exception.NotParsedCallStack.Length; i++)
+                    sb.Append(' ', 8).AppendLine(Exception.NotParsedCallStack[i]);
+            }
             return sb.ToString();
         }
         public static List<Call> GetCalls(UnityLogException ule)
