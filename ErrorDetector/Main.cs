@@ -7,7 +7,6 @@ using static UnityModManagerNet.UnityModManager;
 using SFB;
 using System.Text;
 using System.IO;
-using System;
 
 namespace ErrorDetector
 {
@@ -31,22 +30,29 @@ namespace ErrorDetector
                     ExportErrors();
                 GUILayout.FlexibleSpace();
                 GUILayout.EndHorizontal();
-                for (int i = 0; i < Errors.Count; i++) 
-                    Errors[i].Display();
+                try
+                {
+                    foreach (var err in Errors.Values)
+                        err.Display();
+                }
+                catch { }
             };
         }
         private static void UnityLogCallback(string condition, string stackTrace, LogType type)
         {
-            if (type == LogType.Exception) 
-                if (!ErrorHashes.Contains(condition + stackTrace))
+            if (type == LogType.Exception)
+            {
+                var hash = condition + stackTrace;
+                if (!Errors.TryGetValue(hash, out Error err))
                 {
-                    var err = new Error(new UnityLogException(condition, stackTrace));
-                    Errors.Add(err);
-                    ErrorHashes.Add(err.Exception.Hash);
+                    err = new Error(new UnityLogException(condition, stackTrace));
+                    err.OccurCount++;
+                    Errors.Add(hash, err);
                 }
+                else err.OccurCount++;
+            }
         }
-        public static readonly List<Error> Errors = new List<Error>();
-        public static readonly HashSet<string> ErrorHashes = new HashSet<string>();
+        public static readonly Dictionary<string, Error> Errors = new Dictionary<string, Error>();
         public static void UpdateActives(ModEntry with)
         {
             ActiveMods = modEntries.Where(m => m.Active).ToList();
@@ -63,7 +69,7 @@ namespace ErrorDetector
             var path = StandaloneFileBrowser.OpenFolderPanel("Save Directory", "", false);
             if (path.Length == 0) return;
             StringBuilder sb = new StringBuilder();
-            foreach (Error err in Errors)
+            foreach (Error err in Errors.Values)
                 sb.AppendLine(err.ToString());
             File.WriteAllText(Path.Combine(path[0], "Errors.txt"), sb.ToString());
         }

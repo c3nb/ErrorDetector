@@ -15,6 +15,7 @@ namespace ErrorDetector
         public readonly bool ModContains;
         public readonly IEnumerable<UnityModManager.ModEntry> Mods;
         public readonly List<Call> Calls;
+        public int OccurCount { get; internal set; }
         bool expanded = false;
         bool callstackExpanded = false;
         public Error(UnityLogException ule)
@@ -27,7 +28,7 @@ namespace ErrorDetector
         }
         public void Display()
         {
-            if (expanded = GUILayout.Toggle(expanded, $"Error From <b>{(ModError ? "Mod" : "Internal")}</b>"))
+            if (expanded = GUILayout.Toggle(expanded, $"Error From <b>{(ModError ? "Mod" : "Internal")} (Occured {OccurCount})</b>"))
             {
                 BeginIndent();
                 if (ModContains)
@@ -48,7 +49,7 @@ namespace ErrorDetector
         public override string ToString()
         {
             StringBuilder sb = new StringBuilder();
-            sb.AppendLine($"Error From {(ModError ? "Mod" : "Internal")}");
+            sb.AppendLine($"Error From {(ModError ? "Mod" : "Internal")} (Occured {OccurCount})");
             if (ModContains)
                 sb.Append(' ', 4).AppendLine($"Related Mods: {ToString(Mods, e => e.Info.DisplayName)}");
             sb.Append(' ', 4).AppendLine($"Error Type: {Exception.ExceptionType}");
@@ -57,6 +58,9 @@ namespace ErrorDetector
             sb.Append(' ', 4).AppendLine("Call Stack");
             for (int i = 0; i < Calls.Count; i++)
                 sb.Append(' ', 8).AppendLine($"{(i == 0 ? "Target Site" : "at")} {Calls[i]}");
+            sb.Append(' ', 4).AppendLine("Not Parsed Call Stacks");
+            for (int i = 0; i < Exception.NotParsedCallStack.Length; i++)
+                sb.Append(' ', 8).AppendLine(Exception.NotParsedCallStack[i]);
             return sb.ToString();
         }
         public static List<Call> GetCalls(UnityLogException ule)
